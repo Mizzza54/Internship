@@ -24,9 +24,6 @@
         <!-- Apache Felix SCR annotations -->
         <org.osgi.service.component.annotations-version>1.5.0</org.osgi.service.component.annotations-version>
 
-        <!-- maven-scr-plugin -->
-        <maven-scr-plugin-version>1.26.4</maven-scr-plugin-version>
-
         <!-- maven Bundle Plugin -->
         <maven-bundle-plugin-version>5.1.4</maven-bundle-plugin-version>
     </properties>
