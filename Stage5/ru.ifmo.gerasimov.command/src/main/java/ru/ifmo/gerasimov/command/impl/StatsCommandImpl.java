@@ -1,12 +1,12 @@
 package ru.ifmo.gerasimov.command.impl;
 
+import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.service.component.annotations.*;
 import ru.ifmo.gerasimov.command.StatsCommand;
-import ru.ifmo.gerasimov.core.StatsService;
-import ru.ifmo.gerasimov.core.WordStatisticPair;
-import ru.ifmo.gerasimov.core.WrappedFeedException;
+import ru.ifmo.gerasimov.core.services.StatsService;
+import ru.ifmo.gerasimov.core.utils.WordStatisticPair;
+import ru.ifmo.gerasimov.core.exceptions.WrappedException;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
         service = StatsCommand.class,
         immediate = true,
         property = {
-                "osgi.command.scope=news",
-                "osgi.command.function=stats"
+                CommandProcessor.COMMAND_SCOPE + "=news",
+                CommandProcessor.COMMAND_FUNCTION + "=stats"
         }
 )
 public class StatsCommandImpl implements StatsCommand {
@@ -27,6 +27,8 @@ public class StatsCommandImpl implements StatsCommand {
                 stats
                 stats arg [n]
             """;
+    private final static String ALL = "all";
+    private final static Integer DEFAULT_COUNT = 10;
 
     private final Map<String, StatsService> statsServices = new HashMap<>();
 
@@ -66,57 +68,43 @@ public class StatsCommandImpl implements StatsCommand {
                     stringJoiner.add(String.format("%d) %s", lastIndex, "all"));
                     return stringJoiner.toString();
                 case 1:
-                    if (statsServices.containsKey(args[0])) {
-                        List<String> words = statsServices
-                                .get(args[0])
-                                .getMostFrequentlyWords(10)
-                                .stream()
-                                .map(WordStatisticPair::toString)
-                                .collect(Collectors.toList());
-                        words.forEach(stringJoiner::add);
-                        return stringJoiner.toString();
-                    } else {
-                        if (args[0].equals("all")) {
-                            return getGeneralStats(10);
-                        } else {
-                            return "News not found!";
-                        }
-                    }
+                    return getStats(args, stringJoiner, DEFAULT_COUNT);
                 case 2:
                     try {
                         Integer count = Integer.parseInt(args[1]);
-                        if (statsServices.containsKey(args[0])) {
-                                List<String> words = statsServices
-                                        .get(args[0])
-                                        .getMostFrequentlyWords(count)
-                                        .stream()
-                                        .map(WordStatisticPair::toString)
-                                        .collect(Collectors.toList());
-                                words.forEach(stringJoiner::add);
-                                return stringJoiner.toString();
-                        } else {
-                            if (args[0].equals("all")) {
-                                return getGeneralStats(count);
-                            } else {
-                                return "News not found!";
-                            }
-                        }
+                        return getStats(args, stringJoiner, count);
                     } catch (NumberFormatException e) {
                         return "Invalid argument: second argument must be number!\n" + USAGE;
                     }
                 default:
                     return USAGE;
             }
-        } catch (IOException e) {
+        } catch (WrappedException e) {
             e.printStackTrace();
-            return "Was thrown IOException!\nThere is a problem reading the stream of the URL";
-        } catch (WrappedFeedException e) {
-            e.printStackTrace();
-            return "Was thrown FeedException!\nFeed could not be parsed";
+            return e.getMessage();
         }
     }
 
-    private String getGeneralStats(Integer count) throws IOException, WrappedFeedException {
+    private String getStats(String[] args, StringJoiner stringJoiner, Integer defaultCount) throws WrappedException {
+        if (statsServices.containsKey(args[0])) {
+            List<String> words = statsServices
+                    .get(args[0])
+                    .getMostFrequentlyWords(defaultCount)
+                    .stream()
+                    .map(WordStatisticPair::toString)
+                    .collect(Collectors.toList());
+            words.forEach(stringJoiner::add);
+            return stringJoiner.toString();
+        } else {
+            if (ALL.equals(args[0])) {
+                return getGeneralStats(defaultCount);
+            } else {
+                return "News not found!";
+            }
+        }
+    }
+
+    private String getGeneralStats(Integer count) throws WrappedException {
         StringJoiner stringJoiner = new StringJoiner("\n");
         List<WordStatisticPair> pairs = new ArrayList<>();
         for (StatsService elem : statsServices.values()) {

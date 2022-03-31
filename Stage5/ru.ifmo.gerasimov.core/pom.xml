@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>Stage5</artifactId>
-        <groupId>org.example</groupId>
+        <groupId>ru.ifmo</groupId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -23,6 +23,13 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.component.annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- OSGi metatype annotations -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -68,9 +75,17 @@
                         </Embed-Transitive>
                         <Export-Package>
                             ru.ifmo.gerasimov.core,
+                            ru.ifmo.gerasimov.core.exceptions,
+                            ru.ifmo.gerasimov.core.services,
+                            ru.ifmo.gerasimov.core.services.impl,
+                            ru.ifmo.gerasimov.core.utils,
                             com.rometools.rome.*,
                             org.jdom2.*
                         </Export-Package>
+                        <!-- Enable processing of OSGI DS component annotations -->
+                        <_dsannotations>*</_dsannotations>
+                        <!-- Enable processing of OSGI metatype annotations -->
+                        <_metatypeannotations>*</_metatypeannotations>
                     </instructions>
                 </configuration>
             </plugin>
